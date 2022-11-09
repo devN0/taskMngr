@@ -5,6 +5,8 @@ import com.example.springrestdemo.tasks.dtos.CreateTaskResponseDto;
 import com.example.springrestdemo.tasks.dtos.UpdateTaskRequestDto;
 import com.example.springrestdemo.tasks.dtos.UpdateTaskResponseDto;
 import com.example.springrestdemo.tasks.mappers.TaskMapper;
+import org.modelmapper.ModelMapper;
+import org.modelmapper.TypeMap;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -16,14 +18,27 @@ public class TaskService {
     }
 
     public CreateTaskResponseDto createTask(CreateTaskRequestDto createTaskRequestDto) {
-        TaskMapper taskMapper = TaskMapper.INSTANCE;
-        TaskEntity taskEntity = taskMapper.mapCreateTaskRequestDtoToTaskEntity(createTaskRequestDto);
-        taskEntity.setCompleted(false);
+        ModelMapper modelMapper = new ModelMapper();
 
-        TaskEntity savedTaskEntity = taskRepository.save(taskEntity);
+        TaskEntity taskEntity1 = modelMapper.map(createTaskRequestDto, TaskEntity.class);
+        taskEntity1.setCompleted(false);
+        TaskEntity savedTaskEntity1 = taskRepository.save(taskEntity1);
 
-        CreateTaskResponseDto createTaskResponseDto = taskMapper.mapTaskEntityToCreateTaskResponseDto(savedTaskEntity);
-        return createTaskResponseDto;
+//        TypeMap<TaskEntity, CreateTaskResponseDto> typeMapTaskEntityToDto = modelMapper.typeMap(TaskEntity.class, CreateTaskResponseDto.class);
+//        typeMapTaskEntityToDto.addMappings(mapper -> {
+//            mapper.skip(TaskEntity::getId, CreateTaskResponseDto::);
+//        });
+        CreateTaskResponseDto createTaskResponseDto1 = modelMapper.map(savedTaskEntity1, CreateTaskResponseDto.class);
+
+//        TaskMapper taskMapper = TaskMapper.INSTANCE;
+//        TaskEntity taskEntity = taskMapper.mapCreateTaskRequestDtoToTaskEntity(createTaskRequestDto);
+//        taskEntity.setCompleted(false);
+//
+//        TaskEntity savedTaskEntity = taskRepository.save(taskEntity);
+//
+//        CreateTaskResponseDto createTaskResponseDto = taskMapper.mapTaskEntityToCreateTaskResponseDto(savedTaskEntity);
+
+        return createTaskResponseDto1;
     }
 
     public UpdateTaskResponseDto updateTask(Long id, UpdateTaskRequestDto updateTaskRequestDto) {
