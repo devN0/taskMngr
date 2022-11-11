@@ -1,34 +1,43 @@
 package com.example.springrestdemo.tasks;
 
-import com.example.springrestdemo.tasks.dtos.CreateTaskRequestDto;
-import com.example.springrestdemo.tasks.dtos.CreateTaskResponseDto;
-import com.example.springrestdemo.tasks.dtos.UpdateTaskRequestDto;
-import com.example.springrestdemo.tasks.dtos.UpdateTaskResponseDto;
+import com.example.springrestdemo.tasks.dtos.*;
+import com.example.springrestdemo.tasks.exceptions.TaskNotFoundException;
 import com.example.springrestdemo.tasks.mappers.TaskMapper;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeMap;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+
 @Service
 public class TaskService {
     private final TaskRepository taskRepository;
+    private final TaskMapper taskMapper;
+    private final ModelMapper modelMapper;
 
-    public TaskService(TaskRepository taskRepository) {
+    public TaskService(TaskRepository taskRepository, ModelMapper modelMapper) {
         this.taskRepository = taskRepository;
+        this.taskMapper = TaskMapper.INSTANCE;
+        this.modelMapper = modelMapper;
     }
 
-    public CreateTaskResponseDto createTask(CreateTaskRequestDto createTaskRequestDto) {
-        ModelMapper modelMapper = new ModelMapper();
+    public TaskResponseDto getTaskById(Long id) throws TaskNotFoundException {
+//        TaskEntity taskEntity = taskRepository.findTaskEntityById(id);
+        TaskEntity taskEntity = taskRepository.findById(id).orElseThrow(()->new TaskNotFoundException(id));
+        TaskResponseDto taskResponseDto = modelMapper.map(taskEntity, TaskResponseDto.class);
+        return taskResponseDto;
+    }
+
+    public TaskResponseDto createTask(CreateTaskRequestDto createTaskRequestDto) throws IllegalArgumentException {
+        if(createTaskRequestDto.getDueDate().isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Due date can't be in past");
+        }
 
         TaskEntity taskEntity1 = modelMapper.map(createTaskRequestDto, TaskEntity.class);
-        taskEntity1.setCompleted(false);
+//        taskEntity1.setCompleted(false);
         TaskEntity savedTaskEntity1 = taskRepository.save(taskEntity1);
 
-//        TypeMap<TaskEntity, CreateTaskResponseDto> typeMapTaskEntityToDto = modelMapper.typeMap(TaskEntity.class, CreateTaskResponseDto.class);
-//        typeMapTaskEntityToDto.addMappings(mapper -> {
-//            mapper.skip(TaskEntity::getId, CreateTaskResponseDto::);
-//        });
-        CreateTaskResponseDto createTaskResponseDto1 = modelMapper.map(savedTaskEntity1, CreateTaskResponseDto.class);
+        TaskResponseDto taskResponseDto1 = modelMapper.map(savedTaskEntity1, TaskResponseDto.class);
 
 //        TaskMapper taskMapper = TaskMapper.INSTANCE;
 //        TaskEntity taskEntity = taskMapper.mapCreateTaskRequestDtoToTaskEntity(createTaskRequestDto);
@@ -36,21 +45,20 @@ public class TaskService {
 //
 //        TaskEntity savedTaskEntity = taskRepository.save(taskEntity);
 //
-//        CreateTaskResponseDto createTaskResponseDto = taskMapper.mapTaskEntityToCreateTaskResponseDto(savedTaskEntity);
+//        TaskResponseDto taskResponseDto = taskMapper.mapTaskEntityToTaskResponseDto(savedTaskEntity);
 
-        return createTaskResponseDto1;
+        return taskResponseDto1;
     }
 
-    public UpdateTaskResponseDto updateTask(Long id, UpdateTaskRequestDto updateTaskRequestDto) {
+    public TaskResponseDto updateTask(Long id, UpdateTaskRequestDto updateTaskRequestDto) {
         TaskEntity savedTaskEntity = taskRepository.findTaskEntityById(id);
 
-        TaskMapper taskMapper = TaskMapper.INSTANCE;
         TaskEntity updatedTaskEntity = taskMapper.mapUpdateTaskRequestDtoToTaskEntity(updateTaskRequestDto, savedTaskEntity);
 
         TaskEntity savedUpdatedTaskEntity = taskRepository.save(updatedTaskEntity);
 
-        UpdateTaskResponseDto updateTaskResponseDto = taskMapper.mapTaskEntityToUpdateTaskResponseDto(savedUpdatedTaskEntity);
+        TaskResponseDto taskResponseDto = taskMapper.mapTaskEntityToTaskResponseDto(savedUpdatedTaskEntity);
 
-        return updateTaskResponseDto;
+        return taskResponseDto;
     }
 }

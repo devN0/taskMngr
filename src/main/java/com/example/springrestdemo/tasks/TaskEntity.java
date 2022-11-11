@@ -19,8 +19,11 @@ public class TaskEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(nullable = false)
     private String name;
+    @Column(nullable = false)
     private LocalDate dueDate;
+    @Column(nullable = false)
     private Boolean completed;
     @OneToMany
     private List<NoteEntity> notes;
